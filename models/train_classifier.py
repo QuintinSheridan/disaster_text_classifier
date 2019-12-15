@@ -1,7 +1,4 @@
 import sys
-import sklearn 
-print(sklearn.__version__)
-
 import nltk
 import pickle
 import pandas as pd
@@ -51,8 +48,6 @@ def load_data(database_filepath):
     
     X = df['message'].values 
     Y = df.drop(['id', 'original', 'message','genre'], axis =1)
-    # drop any labels with no occurences
-    Y=Y.drop('child_alone', axis=1)
     category_names = list(Y.columns)
     Y=Y.values
     
@@ -83,7 +78,7 @@ def build_model():
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer = tokenize)),
         ('tfidf', TfidfTransformer()),
-        ('mclsf', MultiOutputClassifier(estimator=RandomForestClassifier()))
+        ('mclf', MultiOutputClassifier(estimator=RandomForestClassifier()))
     ])
     
     return pipeline
@@ -100,17 +95,25 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Returns:
         None
     """
+    
+    parameters = {
+    'mclf__max_depth': [10, 20],
+    'mclf__max_features': ['auto', 'sqrt'],
+    'mclf__max_leaf_nodes': [50,100],
+    'mclf__min_samples_leaf': [1,2],
+    'mclf__n_estimators': [100,200]
+    }
+
+    # create grid search object
+    cv = GridSearchCV(pipeline, param_grid=parameters)
+    
     #make predictions on X_test
     Y_pred = model.predict(X_test)
     
-    print('Y_pred.shape: , {Y_pred.shape}')
- 
     # evaluate f1 score for each label
     for i in range(len(category_names)):
         pred_label = Y_pred[:,i]
-        print(f'pred_lable.shape: {pred_label.shape}')
         test_label = Y_test[:,i]
-        print(f'test_label.shape: test_label.shape')
         try:
             report = classification_report(y_true = test_label, y_pred = pred_label)
             print(report)
