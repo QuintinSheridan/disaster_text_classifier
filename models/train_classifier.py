@@ -1,4 +1,6 @@
 import sys
+import sklearn 
+print(sklearn.__version__)
 
 import nltk
 import pickle
@@ -37,23 +39,24 @@ def load_data(database_filepath):
         X ([str]): numpy array with disaster messages
         Y ([[bool]]): 2d numpy array with message labels
     """
+    print(f'database_filepath: {database_filepath}')
     # load data from database
     try:
-        conn = create_engine(database_filepath)
+        engine = create_engine(f'sqlite:///{database_filepath}')
+        df = pd.read_sql('SELECT * FROM train_test_data', engine)
     except Exception as e:
         print(f'''The following exception occured while trying to make a sqlite db connection: {e}''')
         
-    df = pd.read_sql('SELECT * FROM InsertTableName', conn)
-    
     # retrieve features and lables from df 
+    
     X = df['message'].values 
     Y = df.drop(['id', 'original', 'message','genre'], axis =1)
-    
     # drop any labels with no occurences
-    Y=Y.drop('child_alone', axis=1).values
-    Y.sum(axis=0)
+    Y=Y.drop('child_alone', axis=1)
+    category_names = list(Y.columns)
+    Y=Y.values
     
-    return X, Y
+    return X, Y, category_names
 
 
 def tokenize(text):
@@ -97,17 +100,22 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Returns:
         None
     """
-    #fit model and make predictions on X_test
-    model.fit(X_train, y=Y_train)
-    Y_pred = pipeline.predict(X_test)
-
+    #make predictions on X_test
+    Y_pred = model.predict(X_test)
+    
+    print('Y_pred.shape: , {Y_pred.shape}')
+ 
     # evaluate f1 score for each label
     for i in range(len(category_names)):
         pred_label = Y_pred[:,i]
+        print(f'pred_lable.shape: {pred_label.shape}')
         test_label = Y_test[:,i]
-        label_f1 = f1_score(y_true = test_label, y_pred = pred_label)
-        report = classification_report(y_true = test_label, y_pred = pred_label)
-        print(report)
+        print(f'test_label.shape: test_label.shape')
+        try:
+            report = classification_report(y_true = test_label, y_pred = pred_label)
+            print(report)
+        except Exception as e:
+            print(e)
         
         
 
@@ -120,7 +128,7 @@ def save_model(model, model_filepath):
         None
     """
     # save the model to disk
-    pickle.dump(pipeline, open(model_filepath, 'wb'))
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
@@ -153,3 +161,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

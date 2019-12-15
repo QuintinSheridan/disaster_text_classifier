@@ -18,7 +18,7 @@ def load_data(messages_filepath, categories_filepath):
         messages = pd.read_csv(messages_filepath)
         categories = pd.read_csv(categories_filepath)
     except Exception as e:
-        print e
+        print(e)
     
     # merge datasets
     df = messages.merge(categories, on = 'id', how='left')
@@ -66,17 +66,15 @@ def save_data(df, database_filename):
     Returns:
         None
     """
+    print(f'database_filename: {database_filename}')
     # create connection and convert df to table, close conn after
     try:
-        conn = create_engine('sqlite:///InsertDatabaseName.db')
+        engine = create_engine(f'sqlite:///{database_filename}')
+        df.to_sql('train_test_data', engine, index=False) 
     except Exception as e:
         print(f'''The following error occured while trying to make 
-              a sqlit db connection: {e}'''
+              a sqlit db table: {e}''')
     
-    df.to_sql('InsertTableName', conn, index=False)
-    conn.close()
-    
-
 
 def main():
     if len(sys.argv) == 4:
