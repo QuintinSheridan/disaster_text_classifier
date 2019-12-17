@@ -105,7 +105,7 @@ def evaluate_model(model, X_test, Y_test, category_names):
     }
 
     # create grid search object
-    cv = GridSearchCV(pipeline, param_grid=parameters)
+    cv = GridSearchCV(model, param_grid=parameters)
     
     #make predictions on X_test
     Y_pred = model.predict(X_test)
