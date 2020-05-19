@@ -105,10 +105,10 @@ def evaluate_model(model, X_test, Y_test, category_names):
     }
 
     # create grid search object
-    cv = GridSearchCV(model, param_grid=parameters)
+    cv_model = GridSearchCV(model, param_grid=parameters)
     
     #make predictions on X_test
-    Y_pred = model.predict(X_test)
+    Y_pred = cv.predict(X_test)
     
     # evaluate f1 score for each label
     for i in range(len(category_names)):
@@ -119,6 +119,8 @@ def evaluate_model(model, X_test, Y_test, category_names):
             print(report)
         except Exception as e:
             print(e)
+
+    return cv_model
         
         
 
@@ -148,10 +150,10 @@ def main():
         model.fit(X_train, Y_train)
         
         print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
+        cv_model = evaluate_model(model, X_test, Y_test, category_names)
 
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
-        save_model(model, model_filepath)
+        save_model(cv_model, model_filepath)
 
         print('Trained model saved!')
 
